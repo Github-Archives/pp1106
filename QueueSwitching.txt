@@ -1,0 +1,161 @@
+import java.util.Random;
+
+public class QueueSwitching {
+
+    private static int getPoissonRandom(double mean) {
+
+        Random r = new Random();
+        double L = Math.exp(-mean);
+        int k = 0;
+        double p = 1.0;
+        do {
+            p = p * r.nextDouble();
+            k++;
+        } while (p > L);
+        return k - 1;
+    }
+
+    public static void main(String[] args)  {
+
+        int numQueueTwoOne = 0;
+        int numSwitchedServed = 0;
+        boolean vOutput = true;
+        int rounds = 500;
+        boolean outputTerse = false;
+        double mean = 0.25;
+        QueueLinkedList myList = new QueueLinkedList();
+        QueueLinkedList myList2 = new QueueLinkedList();
+        QueueLinkedList myList3 = new QueueLinkedList();
+        Server myServer = new Server();
+        Server myServer1 = new Server();
+        Server myServer2 = new Server();
+
+        for (int i = 0; i < rounds; i++){
+            System.out.println("TICK: "+i);
+            int arrive = getPoissonRandom(mean);
+
+            for (int j=0; j < arrive; j++){
+                Client client1 = new Client(""+j+i);
+                Client client2 = new Client(""+j+i+"D");
+                Client vClient = new Client(""+j+i + " Virtual");
+                vClient.copyClient(client1);
+
+                myList.enqueue(client1);
+                client1.setOriginalQueue(1);
+                client1.setCurrentQueue(1);
+                myList2.enqueue(vClient);
+                vClient.setOriginalQueue(1);
+                vClient.setCurrentQueue(1);
+                myList3.enqueue(client2);
+                client2.setOriginalQueue(2);
+                client2.setCurrentQueue(2);
+            }
+
+            if (myList.getNumberInList() > 0)	{
+                if (myServer.getIsBusy() == false)	{
+                    myServer.setServingC(myList.dequeue());
+                    System.out.println("tick # " + i + " server 1 start service on customer " + myServer.getClientServed().getId() + " server time " + myServer.getClientServed().getServerTime());
+                }
+            }
+            Random rand = new Random();
+            for (int k = 0; k < arrive; k++){
+                int number = rand.nextInt(10);
+                boolean lessFive = (number < 5);
+                if((lessFive == true)&&(myList.getNumberInList()>2)){
+                    Client otherClient = myList.switchQueue();
+                    System.out.println("\tSWITCHED "+otherClient.getId()+" & ADDED TO QUEUE 2 ");
+                    otherClient.setQueueSwitched(true);
+                    myList3.enqueue(otherClient);
+                    otherClient.setCurrentQueue(2);
+
+                    String vId = otherClient.getId() + " VIRTUAL";
+                    myList2.setSwitched(vId);
+                }
+            }
+
+            if (myList.getNumberInList() > 0)	{
+                if (myServer.isDoneWithClient(i) == true){
+                    System.out.println("TICK: "+i+" SERVER 1 ENDED SERVICE ON CUSTOMER "+myServer.getClientServed().getId());
+                    myServer.setIsBusy(false);
+                }else{
+                    myServer.setIsBusy(true);
+                }
+            }
+            if (myList2.getNumberInList() > 0){
+                if (myServer1.getIsBusy()==false)	{
+                    myServer1.setServingC(myList2.dequeue());
+                    System.out.println("TICK: "+i+" SERVER 1 VIRTUAL START SERVICE ON CUSTOMER " + myServer1.getClientServed().getId()+" SERVER-TIME "+myServer1.getClientServed().getServerTime());
+
+                    if (myServer1.getClientServed().getQueueSwitched() == true){
+                        String virId = myServer1.getClientServed().getId();
+                        int suffixInd = virId.indexOf('_');
+                        String actualId = virId.substring(0,suffixInd);
+                        System.out.println("Q 2 SERVING: " +myServer2.getClientServed().getId() );
+
+                        if((myList3.isInQueue(actualId)==true)){
+                            System.out.println("ID "+actualId+" STILL IN QUEUE #2, Q1 BEAT Q2. SET WAIT TIME FROM VIRTUAL QUEUE TO Q2");
+                            int virtualWaitTime = myServer1.getClientServed().getWaitTime();
+                            myList3.whatWouldItHaveWaited(actualId,virtualWaitTime);
+                        }
+                    }
+                }
+            }
+
+            if (myList2.getNumberInList()>0)	{
+                if (myServer1.isDoneWithClient(i) == true){
+                    System.out.println("tick # " + i + " virtual server 1 end service on customer " + myServer1.getClientServed().getId());
+                    myServer1.setIsBusy(false);
+                }
+                else{
+                    myServer1.setIsBusy(true);
+                }
+            }
+
+            if (myList3.getNumberInList() > 0)	{
+                if (myServer2.getIsBusy() == false)	{
+
+                    myServer2.setServingC(myList3.dequeue());
+                    System.out.println("TICK: "+i+" SERVER 2 START ON CUSTOMER " +myServer2.getClientServed().getId() + " SERVER TIME " + myServer2.getClientServed().getServerTime());
+                    if (myServer2.getClientServed().getQueueSwitched() == true){
+                        System.out.println("\t SWITCHED CLIENT BEING SERVED " + myServer2.getClientServed().toString());
+                        String actualId = myServer2.getClientServed().getId();
+                        String virtualId = actualId + "_V";
+                        if((myList2.isInQueue(virtualId) == true)){
+                            System.out.println("id " + virtualId + " IS STILL IN VIRTUAL QUEUE #1 & BEAT Q2 BEAT Q1");
+                            int vWaitingTime = myList2.addWaitTime(virtualId);
+                            myServer2.getClientServed().setWouldHaveWaitedTime(vWaitingTime);
+                            System.out.println("WOULD HAVE WAITING TIME " + myServer2.getClientServed().getId()+" IS "+myServer2.getClientServed().getWouldHaveWaitedTime());
+                        }
+                        numSwitchedServed++;
+                    }
+                }
+            }
+            if (myList3.getNumberInList() > 0)	{
+                if (myServer2.isDoneWithClient(i) == true){
+                    System.out.println("TICK: "+i+" SERVER #2 END SERVICE ON CUSTOMER " + myServer2.getClientServed().getId());
+                    myServer2.setIsBusy(false);
+                }
+                else{
+                    myServer2.setIsBusy(true);
+                }
+            }
+            myList.increment();
+            myList3.increment();
+            myList2.increment();
+            if (vOutput == true){
+                System.out.println("NUMBER OF ARRIVALS " + arrive);
+                System.out.println("QUEUE #1 SERVER BUSY " + myServer.getIsBusy());
+                System.out.println("QUEUE #1 " + myList.getNumberInList());
+                System.out.println("QUEUE #1 " + myList.toString());
+                System.out.println("QUEUE #1 VIRTUAL SERVER BUSY " + myServer1.getIsBusy());
+                System.out.println("QUEUE #1 VIRTUAL " + myList2.getNumberInList());
+                System.out.println("QUEUE #1 VIRTUAL " + myList2.toString());
+                System.out.println("QUEUE #2 SERVER BUSY " + myServer2.getIsBusy());
+                System.out.println("QUEUE #2 " + myList3.getNumberInList());
+                System.out.println("QUEUE #2 " + myList3.toString());
+                System.out.println("------------------------------------");
+            }
+        }
+        System.out.println("NUMBER SWITCHED WHO WERE SERVED "+numSwitchedServed);
+    }
+}
