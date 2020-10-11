@@ -2,7 +2,6 @@ public class QueueLinkedList {
     private static class Link {
         public Client data;
         public Link next;
-
         public Link(Client c){
             data = c;
         }
@@ -10,9 +9,8 @@ public class QueueLinkedList {
             data = c;
             next = n;
         }
-
-
     }
+    
     private Link front;
     private Link back;
     private int size;
@@ -46,12 +44,12 @@ public class QueueLinkedList {
         return headData;
 
     }
+    
     public int getNumberInList(){
         return size;
     }
 
     public Client switchQueue(){
-
         if (front == null || front.next == null){
             return null;
         }
@@ -84,7 +82,6 @@ public class QueueLinkedList {
             if (retId.equals(id)){
                 pointer.data.setQueueSwitched(true);
             }
-
             pointer = pointer.next;
         }
     }
@@ -96,11 +93,11 @@ public class QueueLinkedList {
             if (pointer.data.getId().equals(id)){
                 result = true;
             }
-
             pointer = pointer.next;
         }
         return result;
     }
+    
     public int addWaitTime(String stopId){
         int totalWaitTime = 0;
         Link pointer = front;
@@ -122,6 +119,7 @@ public class QueueLinkedList {
         System.out.println("TOTAL UP UNTIL " + totalWaitTime);
         return totalWaitTime;
     }
+    
     public void whatWouldItHaveWaited(String idParam, int wouldHaveWaitedTime){
         Link pointer = front;
         while (pointer != null){
@@ -134,6 +132,7 @@ public class QueueLinkedList {
             pointer = pointer.next;
         }
     }
+    
     public String toString() {
         String str = "";
         for (Link p = front; p != null; p = p.next) {
