@@ -1,9 +1,7 @@
 import java.util.Random;
 
 public class QueueSwitching {
-
     private static int getPoissonRandom(double mean) {
-
         Random r = new Random();
         double L = Math.exp(-mean);
         int k = 0;
@@ -16,7 +14,6 @@ public class QueueSwitching {
     }
 
     public static void main(String[] args)  {
-
         int numQueueTwoOne = 0;
         int numSwitchedServed = 0;
         boolean vOutput = true;
@@ -130,6 +127,7 @@ public class QueueSwitching {
                     }
                 }
             }
+            
             if (myList3.getNumberInList() > 0)	{
                 if (myServer2.isDoneWithClient(i) == true){
                     System.out.println("TICK: "+i+" SERVER #2 END SERVICE ON CUSTOMER " + myServer2.getClientServed().getId());
