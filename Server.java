@@ -4,7 +4,6 @@ public class Server {
     private boolean busy;
     private int start;
     private int remainingTime;
-
     public Server(){
     }
     public void setServingC(Client c){
